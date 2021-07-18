@@ -1,15 +1,13 @@
 const robot = require('robotjs')
 
-const greenHexColor = "c4f16a";
-const colorThreshold = 0.95;
+const greenHexColor = "c4f16a"
+const colorThreshold = 0.95
 
-let pointedColor = "";
-let pointerLocationX = 0;
-let pointerLocationY = 0;
+let pointedColor = ""
+let pointerLocationX = 0
+let pointerLocationY = 0
 
 let calibratingState = false;
-let calibratingCounter = 5;
-
 let fishingState = false;
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
@@ -18,25 +16,28 @@ Main()
 
 async function Main(){
   do {
-    const { currentPointerX, currentPointerY } = robot.getMousePos()
+    let mouse = robot.getMousePos()
 
     if (!calibratingState){
+      console.log("Auto Fishing started. Please ensure Power Save mode is DISABLED. Press CTRL + C to Abort")
+      await delay(2000)
       console.log("Calibrating Starting in 5 second.. Place your mouse where green area will appear (inside fishing icon), don't move it!")
-      await delay(3000)
+      await delay(2000)
 
+      let counter = 5
       do {
-        console.log("..",calibratingCounter)
+        console.log("..",counter)
         await delay(1000)
         
-        calibratingCounter -= 1
-      } while(calibratingCounter>=1)
+        counter -= 1
+      } while(counter>=1)
 
-      const { x, y } = robot.getMousePos()
-      pointedColor = robot.getPixelColor(x, y)
+      mouse = robot.getMousePos()
+      pointedColor = robot.getPixelColor(mouse.x, mouse.y)
 
       calibratingState = true
-      pointerLocationX = x
-      pointerLocationY = y
+      pointerLocationX = mouse.x
+      pointerLocationY = mouse.y
 
       console.log("Calibrating done, set up on X: ",pointerLocationX, "Y: ", pointerLocationY, "Color: #", pointedColor)
     }
@@ -45,7 +46,7 @@ async function Main(){
       && hexColorDelta(robot.getPixelColor(pointerLocationX, pointerLocationY), pointedColor) >= colorThreshold){
       robot.moveMouse(pointerLocationX, pointerLocationY)
       robot.mouseClick();
-      robot.moveMouse(currentPointerX,currentPointerY)
+      robot.moveMouse(mouse.x, mouse.y)
       fishingState = true
 
       console.log("Start Fishing State")
@@ -53,7 +54,7 @@ async function Main(){
       && hexColorDelta(robot.getPixelColor(pointerLocationX, pointerLocationY), greenHexColor) >= colorThreshold) {
       robot.moveMouse(pointerLocationX, pointerLocationY)
       robot.mouseClick();
-      robot.moveMouse(currentPointerX,currentPointerY)
+      robot.moveMouse(mouse.x , mouse.y)
 
       console.log("Catch!")
       fishingState = false
