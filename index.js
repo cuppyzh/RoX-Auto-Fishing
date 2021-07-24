@@ -10,6 +10,10 @@ let pointerLocationY = 0
 let calibratingState = false;
 let fishingState = false;
 
+let delayTime = 50
+let flagChecker = 0
+let flagThreshold = 200 
+
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 Main()
@@ -19,10 +23,10 @@ async function Main(){
     let mouse = robot.getMousePos()
 
     if (!calibratingState){
-      console.log("Auto Fishing started. Please ensure Power Save mode is DISABLED. Press CTRL + C to Abort")
-      await delay(2000)
+      console.log("Auto Fishing started. Please ensure Power Save mode is DISABLED. And Flying Chat is DISABLED Press CTRL + C to Abort")
+      await delay(1000)
       console.log("Calibrating Starting in 5 second.. Place your mouse where green area will appear (inside fishing icon), don't move it!")
-      await delay(2000)
+      await delay(1000)
 
       let counter = 5
       do {
@@ -43,24 +47,35 @@ async function Main(){
     }
 
     if (!fishingState 
-      && hexColorDelta(robot.getPixelColor(pointerLocationX, pointerLocationY), pointedColor) >= colorThreshold){
-      robot.moveMouse(pointerLocationX, pointerLocationY)
-      robot.mouseClick();
-      robot.moveMouse(mouse.x, mouse.y)
-      fishingState = true
+      && hexColorDelta(robot.getPixelColor(pointerLocationX, pointerLocationY), pointedColor) >= colorThreshold)
+      {
+        robot.moveMouse(pointerLocationX, pointerLocationY)
+        robot.mouseClick();
+        robot.moveMouse(mouse.x, mouse.y)
+        fishingState = true
 
-      console.log("Start Fishing State")
-    } else if (fishingState
-      && hexColorDelta(robot.getPixelColor(pointerLocationX, pointerLocationY), greenHexColor) >= colorThreshold) {
-      robot.moveMouse(pointerLocationX, pointerLocationY)
-      robot.mouseClick();
-      robot.moveMouse(mouse.x , mouse.y)
+        console.log("Start Fishing State")
+    } else if (fishingState) {
 
-      console.log("Catch!")
-      fishingState = false
+        if (hexColorDelta(robot.getPixelColor(pointerLocationX, pointerLocationY), greenHexColor) >= colorThreshold)
+        {
+          robot.moveMouse(pointerLocationX, pointerLocationY)
+          robot.mouseClick();
+          robot.moveMouse(mouse.x , mouse.y)
+
+          console.log("Catch!")
+          fishingState = false
+        } else if (flagChecker * delayTime == flagChecker
+          && hexColorDelta(robot.getPixelColor(pointerLocationX, pointerLocationY), pointedColor) >= colorThreshold) // Check if Fishing state stalled for 10 second -- fishing state in 10 seconds are unlikely
+        { 
+          console.log("Resetting fishing state... Fishing state stalled too long")
+          fishingState = false
+        }
+
     }
 
-    await delay(100)
+    await delay(delayTime)
+    flagChecker += 1
   } while(true!=false)
 }
 
